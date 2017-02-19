@@ -44,21 +44,22 @@ def _gs_decorrelation(w, W, j):
     Assumes that W is orthogonal
     w changed in place
     """
-    w -= np.dot(np.dot(w, W[:j].T), W[:j])
+    w -= np.dot(np.dot(w, np.conj(W[:j].T)), W[:j])
     return w
 
 
 def _sym_decorrelation(W):
     """ Symmetric decorrelation
-    i.e. W <- (W * W.T) ^{-1/2} * W
+    i.e. W <- (W * W.H) ^{-1/2} * W
     """
-    s, u = linalg.eigh(np.dot(W, W.T))
+    s, u = linalg.eigh(np.dot(W, np.conj(W.T)))
     # u (resp. s) contains the eigenvectors (resp. square roots of
-    # the eigenvalues) of W * W.T
-    return np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), W)
+    # the eigenvalues) of W * W.H
+    return np.dot(np.dot(u * (1. / np.sqrt(s)), np.conj(u.T)), W)
 
 
 def _ica_def(X, tol, g, fun_args, max_iter, w_init):
+    ### NOT FIXED FOR COMPLEX
     """Deflationary FastICA using fun approx to neg-entropy function
 
     Used internally by FastICA.
@@ -109,12 +110,12 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
                                 - g_wtx[:, np.newaxis] * W)
         """
         
-        gwtx, g_wtx = g(np.abs(fast_dot(np.conj(W), X))**2, fun_args)
-        W1 = _sym_decorrelation(fast_dot(gwtx * (fast_dot(W,np.conj(X))), X.T) / p_
+        gwtx, g_wtx = g(np.abs(fast_dot(W, X))**2, fun_args)
+        W1 = _sym_decorrelation(fast_dot(gwtx * np.conj(fast_dot(W,X)), X.T) / p_
                                 - g_wtx[:, np.newaxis] * W)
         del gwtx, g_wtx
         # builtin max, abs are faster than numpy counter parts.
-        lim = max(abs(abs(np.diag(fast_dot(W1, W.T))) - 1))
+        lim = max(abs(abs(np.diag(fast_dot(W1, np.conj(W.T)))) - 1))
         W = W1
         if lim < tol:
             break
@@ -137,7 +138,7 @@ def _logcosh(x, fun_args=None):
     for i, gx_i in enumerate(gx):  # please don't vectorize.
         g_x[i] = (alpha * (1 - gx_i ** 2) * x[i]).mean() + gx_i.mean()   #g'(x)=1-tanh^2(x)
     return gx, g_x
-"""
+    """
     alpha = fun_args.get('alpha', 1.0)  # comment it out?
     
     x *= alpha
@@ -147,17 +148,17 @@ def _logcosh(x, fun_args=None):
     for i, gx_i in enumerate(gx):  # please don't vectorize.
     g_x[i] = (alpha * (1 - gx_i ** 2)).mean()   #g'(x)=1-tanh^2(x)
     return gx, g_x
-"""
+    """
 
 
-def _exp(x, fun_args):
+def _exp(x, fun_args):      ### NOT FIXED FOR COMPLEX
     exp = np.exp(-(x ** 2) / 2)
     gx = x * exp
     g_x = (1 - x ** 2) * exp
     return gx, g_x.mean(axis=-1)
 
 
-def _cube(x, fun_args):
+def _cube(x, fun_args):     ### NOT FIXED FOR COMPLEX
     return x ** 3, (3 * x ** 2).mean(axis=-1)
 
 
@@ -322,7 +323,7 @@ def complexfastica(X, n_components=None, algorithm="parallel", whiten=True,
         u, d, _ = linalg.svd(X, full_matrices=False)
 
         del _
-        K = (u / d).T[:n_components]  # see (6.33) p.140
+        K = np.conj((u / d)).T[:n_components]  # see (6.33) p.140
         del u, d
         X1 = np.dot(K, X)
         # see (13.6) p.267 Here X1 is white and data

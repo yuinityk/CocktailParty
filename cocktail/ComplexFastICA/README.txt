@@ -8,6 +8,8 @@
 複素版にする際、いくつかのエラー処理を無効にしたことが原因かもしれません
 （ただし初期値の生成部分をいじったことはなく、あくまで入力をfloat型に直す処理を無効にしただけ（のつもり）なので関係ないかもしれません）
 
+追記
+2017/2/19   バグは修正したので以上のエラーは起きないはず
 """
 /Users/odakura/vp_backup/ComplexFastICA/mypackage/complex_fastica_.py:58: RuntimeWarning: invalid value encountered in sqrt
   return np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), W)
