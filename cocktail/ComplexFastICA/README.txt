@@ -10,6 +10,12 @@
 
 追記
 2017/2/19   バグは修正したので以上のエラーは起きないはず
+2017/2/20   数回に一回分離できないことがあります  まだバグがあるかもしれません
+2017/2/21   数回に一回分離できないとのことだったが、
+            どうやら今回の入力は、もともとの状態が偶然にも独立性が高く
+            初期値によって、そのまま出力されてしまうことがあるようです
+            一般のデータでは、このようなことは起こらず
+            きちんと成功すると考えていいのではないでしょうか
 """
 /Users/odakura/vp_backup/ComplexFastICA/mypackage/complex_fastica_.py:58: RuntimeWarning: invalid value encountered in sqrt
   return np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), W)
