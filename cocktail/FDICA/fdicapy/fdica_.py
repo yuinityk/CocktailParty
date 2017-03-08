@@ -241,8 +241,6 @@ def fdica(X, frame_length, win=None, step=None):
     S = _multiple_stft(X, frame_length, win, step)
     T, WK = _ica_by_freq(S)
     
-    print WK[:,:,1]
-    
     del S
     U = _get_split_spectrum(T, WK)
     del T, WK

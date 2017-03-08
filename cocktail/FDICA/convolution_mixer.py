@@ -16,9 +16,9 @@ impluse_length=64
 impluse=np.array([[np.zeros(impluse_length),np.zeros(impluse_length)],[np.zeros(impluse_length),np.zeros(impluse_length)]])
 
 impluse[0,0][0]=1.0
-impluse[0,1][0]=0.8
-impluse[1,0][4]=0.8
-impluse[1,1][4]=1.0
+impluse[0,1][16]=0.8
+impluse[1,0][16]=0.8
+impluse[1,1][0]=1.0
 
 #output mixed data to wave file
 data_length=(os.path.getsize(filenames[0])-44)/2
@@ -41,10 +41,10 @@ impluse=np.array([[np.zeros(impluse_length),np.zeros(impluse_length)],[np.zeros(
 _time=np.arange(0,CYCLE*impluse_length,impluse_length)
 _exp=np.exp(_time/(-1.*CYCLE*impluse_length/64))
 
-impluse[0,0][4:impluse_length]=1.0*_exp[0:impluse_length-4]
-impluse[0,1][4:impluse_length]=0.8*_exp[0:impluse_length-4]
-impluse[1,0][4:impluse_length]=0.8*_exp[0:impluse_length-4]
-impluse[1,1][4:impluse_length]=1.0*_exp[0:impluse_length-4]
+impluse[0,0][0:impluse_length]=1.0*_exp[0:impluse_length]
+impluse[0,1][16:impluse_length]=0.8*_exp[0:impluse_length-16]
+impluse[1,0][16:impluse_length]=0.8*_exp[0:impluse_length-16]
+impluse[1,1][0:impluse_length]=1.0*_exp[0:impluse_length]
 
 #output mixed data to wave file
 data_length=(os.path.getsize(filenames[0])-44)/2
@@ -58,7 +58,7 @@ for i in range(components):
     wav.write(filenames[i],RATE,output_data)
 
 
-"""
+
 #finite impluse reactions   ---long_exp---
 CYCLE=1.0/RATE
 impluse_length=256
@@ -67,10 +67,10 @@ impluse=np.array([[np.zeros(impluse_length),np.zeros(impluse_length)],[np.zeros(
 _time=np.arange(0,CYCLE*impluse_length,impluse_length)
 _exp=np.exp(_time/(-1.*CYCLE*impluse_length/64))
 
-impluse[0,0][4:impluse_length]=1.0*_exp[0:impluse_length-4]
-impluse[0,1][8:impluse_length]=0.5*_exp[0:impluse_length-8]
-impluse[1,0][8:impluse_length]=0.5*_exp[0:impluse_length-8]
-impluse[1,1][4:impluse_length]=1.0*_exp[0:impluse_length-4]
+impluse[0,0][0:impluse_length]=1.0*_exp[0:impluse_length]
+impluse[0,1][16:impluse_length]=0.8*_exp[0:impluse_length-16]
+impluse[1,0][16:impluse_length]=0.8*_exp[0:impluse_length-16]
+impluse[1,1][0:impluse_length]=1.0*_exp[0:impluse_length]
 
 #output mixed data to wave file
 data_length=(os.path.getsize(filenames[0])-44)/2
@@ -82,4 +82,4 @@ for i in range(components):
     output_data=output_data/np.max(np.abs(output_data))*32767
     output_data=output_data.astype(np.int16)
     wav.write(filenames[i],RATE,output_data)
-"""
+

@@ -22,77 +22,14 @@ from sklearn.utils.validation import FLOAT_DTYPES
 
 __all__ = ['complexfastica', 'ComplexFastICA']
 
-
-def _gs_decorrelation(w, W, j):
-    """
-    Orthonormalize w wrt the first j rows of W
-
-    Parameters
-    ----------
-    w : ndarray of shape(n)
-        Array to be orthogonalized
-
-    W : ndarray of shape(p, n)
-        Null space definition
-
-    j : int < p
-        The no of (from the first) rows of Null space W wrt which w is
-        orthogonalized.
-
-    Notes
-    -----
-    Assumes that W is orthogonal
-    w changed in place
-    """
-    w -= np.dot(np.dot(w, np.conj(W[:j].T)), W[:j])
-    return w
-
-
 def _sym_decorrelation(W):
     """ Symmetric decorrelation
     i.e. W <- (W * W.H) ^{-1/2} * W
     """
     s, u = linalg.eigh(np.dot(W, np.conj(W.T)))
-    #print s
     # u (resp. s) contains the eigenvectors (resp. square roots of
     # the eigenvalues) of W * W.H
     return np.dot(np.dot(u * (1. / np.sqrt(s)), np.conj(u.T)), W)
-
-
-def _ica_def(X, tol, g, fun_args, max_iter, w_init):
-    ### NOT FIXED FOR COMPLEX
-    """Deflationary FastICA using fun approx to neg-entropy function
-
-    Used internally by FastICA.
-    """
-
-    n_components = w_init.shape[0]
-    W = np.zeros((n_components, n_components), dtype=X.dtype)
-    n_iter = []
-
-    # j is the index of the extracted component
-    for j in range(n_components):
-        w = w_init[j, :].copy()
-        w /= np.sqrt((w ** 2).sum())
-
-        for i in moves.xrange(max_iter):
-            gwtx, g_wtx = g(fast_dot(w.T, X), fun_args)
-
-            w1 = (X * gwtx).mean(axis=1) - g_wtx.mean() * w
-
-            _gs_decorrelation(w1, W, j)
-
-            w1 /= np.sqrt((w1 ** 2).sum())
-
-            lim = np.abs(np.abs((w1 * w).sum()) - 1)
-            w = w1
-            if lim < tol:
-                break
-
-        n_iter.append(i + 1)
-        W[j, :] = w
-
-    return W, max(n_iter)
 
 
 def _ica_par(X, tol, g, fun_args, max_iter, w_init):
@@ -106,15 +43,9 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     
     p_ = float(X.shape[1])
     for ii in moves.xrange(max_iter):
-        """
-        gwtx, g_wtx = g(fast_dot(W, X), fun_args)
-        W1 = _sym_decorrelation(fast_dot(gwtx, X.T) / p_
-                                - g_wtx[:, np.newaxis] * W)
-        """
-        
-        gwtx, g_wtx = g(np.abs(fast_dot(W, X))**2, fun_args)
-        W1 = _sym_decorrelation(fast_dot(gwtx * np.conj(fast_dot(W,X)), X.T) / p_
-                                - g_wtx[:, np.newaxis] * W)
+        U = fast_dot(W,X)
+        gwtx, g_wtx = g(np.abs(U)**2, fun_args)
+        W1 = _sym_decorrelation(fast_dot(gwtx * U, np.conj(X.T)) / p_ - g_wtx[:, np.newaxis] * W)
         del gwtx, g_wtx
         # builtin max, abs are faster than numpy counter parts.
         lim = max(abs(abs(np.diag(fast_dot(W1, np.conj(W.T)))) - 1))
@@ -140,19 +71,8 @@ def _logcosh(x, fun_args=None):
     for i, gx_i in enumerate(gx):  # please don't vectorize.
         g_x[i] = (alpha * (1 - gx_i ** 2) * x[i]).mean() + gx_i.mean()   #g'(x)=1-tanh^2(x)
     return gx, g_x
-    """
-    alpha = fun_args.get('alpha', 1.0)  # comment it out?
-    
-    x *= alpha
-    gx = np.tanh(x, x)  # apply the tanh inplace
-    g_x = np.empty(x.shape[0])
-    # XXX compute in chunks to avoid extra allocation
-    for i, gx_i in enumerate(gx):  # please don't vectorize.
-    g_x[i] = (alpha * (1 - gx_i ** 2)).mean()   #g'(x)=1-tanh^2(x)
-    return gx, g_x
-    """
 
-
+"""
 def _exp(x, fun_args):      ### NOT FIXED FOR COMPLEX
     exp = np.exp(-(x ** 2) / 2)
     gx = x * exp
@@ -162,7 +82,7 @@ def _exp(x, fun_args):      ### NOT FIXED FOR COMPLEX
 
 def _cube(x, fun_args):     ### NOT FIXED FOR COMPLEX
     return x ** 3, (3 * x ** 2).mean(axis=-1)
-
+"""
 
 def complexfastica(X, n_components=None, algorithm="parallel", whiten=True,
             fun="logcosh", fun_args=None, max_iter=200, tol=1e-04, w_init=None,
