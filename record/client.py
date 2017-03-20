@@ -2,20 +2,26 @@
 
 import socket
 
+WAVLEN = 768044
+
 def main():
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     soc.connect(("localhost", 50007))
     
+    chunks = b""
+    bytes_recd = 0
     while(1):
-        data = soc.recv(1024)       #データ受信    
+        chunk = soc.recv(min(WAVLEN-bytes_recd,2048))       #データ受信    
         
-        if data == "q":             # qが押されたら終了
+        if chunk == "":             # qが押されたら終了
             soc.close()
             break
-        receive = data
+        
+        chunks += chunk
+        bytes_recd += len(chunk)
     
-    f=open("jklm_new.txt","wb")     #ファイル書き込み
-    f.write(receive)
+    f=open("dl.wav","wb")     #ファイル書き込み
+    f.write(chunks)
     f.close()
 
 if __name__ == '__main__':
