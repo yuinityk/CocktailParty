@@ -106,6 +106,7 @@ class MyGroup():
         
         hue = kind * 30
         lightness = np.where((50.+10.*octave > 0),50.+10.*octave,0)
+        lightness = np.where(lightness < 100,lightness,100)
         
         bool = lightness < 50
         chroma = 100.-2.*(lightness-50.)*((-1)**bool)
