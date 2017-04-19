@@ -1,4 +1,4 @@
-#!/Users/odakura/CocktailParty/music_quiz_GUI/venv/bin/python
+#!/Users/odakura/CocktailParty/visualizer/venv/bin/python
 
 import sys
 import getopt

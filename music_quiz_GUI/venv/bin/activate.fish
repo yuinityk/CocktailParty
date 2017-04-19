@@ -36,7 +36,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/Users/odakura/CocktailParty/music_quiz_GUI/venv"
+set -gx VIRTUAL_ENV "/Users/odakura/CocktailParty/visualizer/venv"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH
