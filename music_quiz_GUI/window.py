@@ -10,6 +10,10 @@ import time
 import pyaudio
 import wave
 
+
+##titlenameをtxtファイルから読み込むようにすべき
+##その他見た目
+
 RATE =  44100
 n_input = 10
 
@@ -22,23 +26,35 @@ class menu_widget(QtGui.QWidget):
     def initUI(self):
         self.set_button = QtGui.QPushButton('Set',self)
         self.sep_button = QtGui.QPushButton('Separate',self)
-        self.label = QtGui.QLabel('Components',self)
+        self.label1 = QtGui.QLabel('曲数',self)
         self.combobox = QtGui.QComboBox(self)
         for i in range(n_input-1):
             self.combobox.addItem(str(i+2))
+        self.label2 = QtGui.QLabel('アルバム',self)
+        self.albumcombobox = QtGui.QComboBox(self)
+        self.albumcombobox.addItem("album1")
         
-        self.subhbox = QtGui.QHBoxLayout()
-        self.subhbox.addWidget(self.label,alignment=QtCore.Qt.AlignRight)
-        self.subhbox.addWidget(self.combobox)
+        self.subhbox1 = QtGui.QHBoxLayout()
+        self.subhbox1.addWidget(self.label1,alignment=QtCore.Qt.AlignRight)
+        self.subhbox1.addWidget(self.combobox)
+
+        self.subhbox2 = QtGui.QHBoxLayout()
+        self.subhbox2.addWidget(self.label2,alignment=QtCore.Qt.AlignRight)
+        self.subhbox2.addWidget(self.albumcombobox)
         
         self.hbox = QtGui.QHBoxLayout(self)
         self.hbox.addWidget(self.set_button)
         self.hbox.addWidget(self.sep_button)
-        self.hbox.addLayout(self.subhbox)
+        self.hbox.addLayout(self.subhbox1)
+        self.hbox.addLayout(self.subhbox2)
         self.setLayout(self.hbox)
 
     def get_combo_value(self):
         value = self.combobox.currentIndex()+2
+        return value
+
+    def get_album_name(self):
+        value = self.albumcombobox.currentText()
         return value
 
 
@@ -77,7 +93,8 @@ class music_widget(QtGui.QWidget):
                         output=True)
 
         data = wf.readframes(CHUNK)
-
+        
+        self.esc = False
         while data != '':
             stream.write(data)
             data = wf.readframes(CHUNK)
@@ -85,7 +102,6 @@ class music_widget(QtGui.QWidget):
         stream.stop_stream()
         stream.close()
         p.terminate()
-
 
 class _mixed_widget(QtGui.QWidget):
     def __init__(self, parent=None, components=None):
@@ -121,9 +137,9 @@ class mixed_widget(QtGui.QWidget):
         else:
             self.n_components = components
 
-        self.label = QtGui.QLabel("Mixed Music",self)
+        self.label = QtGui.QLabel("混合音源",self)
         font = QtGui.QFont()
-        font.setPointSize(30)
+        font.setPointSize(25)
         self.label.setFont(font)
         self.label.setAlignment(QtCore.Qt.AlignCenter)
 
@@ -131,7 +147,7 @@ class mixed_widget(QtGui.QWidget):
 
         self.vbox = QtGui.QVBoxLayout()
         self.vbox.addWidget(self.label,stretch=1)
-        self.vbox.addWidget(self._mixed,stretch=8)
+        self.vbox.addWidget(self._mixed,stretch=10)
         self.setLayout(self.vbox)
 
 
@@ -169,9 +185,9 @@ class sep_widget(QtGui.QWidget):
         else:
             self.n_components = components
         
-        self.label = QtGui.QLabel("Separated Music",self)
+        self.label = QtGui.QLabel("分離音源",self)
         font = QtGui.QFont()
-        font.setPointSize(30)
+        font.setPointSize(25)
         self.label.setFont(font)
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         
@@ -179,7 +195,7 @@ class sep_widget(QtGui.QWidget):
         
         self.vbox = QtGui.QVBoxLayout()
         self.vbox.addWidget(self.label,stretch=1)
-        self.vbox.addWidget(self._sep,stretch=8)
+        self.vbox.addWidget(self._sep,stretch=10)
         self.setLayout(self.vbox)
 
 class _title_widget(QtGui.QWidget):
@@ -202,7 +218,7 @@ class _title_widget(QtGui.QWidget):
         font.setPointSize(20)
         for i in range(components):
             self.label[i].setFont(font)
-            self.vbox.addWidget(self.label[i])
+            self.vbox.addWidget(self.label[i],alignment=QtCore.Qt.AlignCenter)
         self.setLayout(self.vbox)
 
 class title_widget(QtGui.QWidget):
@@ -219,9 +235,9 @@ class title_widget(QtGui.QWidget):
         else:
             self.n_components = components
     
-        self.label = QtGui.QLabel("Music Title",self)
+        self.label = QtGui.QLabel("タイトル名",self)
         font = QtGui.QFont()
-        font.setPointSize(30)
+        font.setPointSize(25)
         self.label.setFont(font)
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         
@@ -229,7 +245,7 @@ class title_widget(QtGui.QWidget):
     
         self.vbox = QtGui.QVBoxLayout()
         self.vbox.addWidget(self.label,stretch=1)
-        self.vbox.addWidget(self._title,stretch=8)
+        self.vbox.addWidget(self._title,stretch=10)
         self.setLayout(self.vbox)
 
 class _rate_widget(QtGui.QWidget):
@@ -269,9 +285,9 @@ class rate_widget(QtGui.QWidget):
         else:
             self.n_components = components
         
-        self.label = QtGui.QLabel("Rate",self)
+        self.label = QtGui.QLabel("一致率",self)
         font = QtGui.QFont()
-        font.setPointSize(30)
+        font.setPointSize(25)
         self.label.setFont(font)
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         
@@ -279,7 +295,7 @@ class rate_widget(QtGui.QWidget):
         
         self.vbox = QtGui.QVBoxLayout()
         self.vbox.addWidget(self.label,stretch=1)
-        self.vbox.addWidget(self._rate,stretch=8)
+        self.vbox.addWidget(self._rate,stretch=10)
         self.setLayout(self.vbox)
 
 class main_widget(QtGui.QWidget):
@@ -322,10 +338,10 @@ class MainWindow(QtGui.QWidget):
         
         self.vbox = QtGui.QVBoxLayout(self)
         self.vbox.addWidget(self.menu,stretch=1)
-        self.vbox.addWidget(self.main,stretch=10)
+        self.vbox.addWidget(self.main,stretch=12)
         self.setLayout(self.vbox)
         
-        self.setFixedSize(1200,680)
+        self.setFixedSize(1200,700)
         self.menu.set_button.clicked.connect(self.set)
         self.menu.sep_button.clicked.connect(self.separate)
         self.show()
@@ -334,12 +350,13 @@ class MainWindow(QtGui.QWidget):
         self.n_components = self.menu.get_combo_value()
         self.main.close()
         self.main = main_widget(self,self.n_components)
+        self.albumname = self.menu.get_album_name()
     
-        data_length=np.min([os.path.getsize("input/input"+str(i+1)+".wav") for i in range(n_input)])/2-44
+        data_length=np.min([os.path.getsize(self.albumname+"/input"+str(i+1)+".wav") for i in range(n_input)])/2-44
         
         #input voice data
         index = random.sample(range(n_input),self.n_components)
-        filenames = [('input/input' + str(i+1) + '.wav') for i in index]
+        filenames = [(self.albumname+'/input' + str(i+1) + '.wav') for i in index]
         input=[(wav.read(filenames[i])[1][0:data_length]) for i in range(self.n_components)]
         S = np.array(input).T
         
@@ -380,9 +397,9 @@ class MainWindow(QtGui.QWidget):
             wav.write(filenames[i],RATE,S_[:,i])
 
         #input music title
-        titlename = ["One Light", "Fuanteina-Kamisama", "SugarSong&BitterStep", "Hikari", "Rising Hope", "Koisuru-Zukei", "Zankokuna-Tenshi-no-These", "Shangri-La", "fantastic dreamer", "Hiryu-no-Kishi"]
+        titlename = ["One Light", "不安定な神様", "シュガーソングとビターステップ", "星灯", "Rising Hope", "恋する図形", "残酷な天使のテーゼ", "Shangri-La", "fantastic dreamer", "飛竜の騎士"]
         #input music data
-        filenames = [('input/input' + str(i+1) + '.wav') for i in range(n_input)]
+        filenames = [(self.albumname+'/input' + str(i+1) + '.wav') for i in range(n_input)]
         input=[(wav.read(filenames[i])[1][0:data_length]) for i in range(n_input)]
         input = np.array(input)
 
@@ -398,8 +415,6 @@ class MainWindow(QtGui.QWidget):
         #print coef
         percent = np.max(coef,axis=1)*100.0
         index = np.argmax(coef,axis=1)
-        
-        QtCore.QTextCodec.setCodecForCStrings(QtCore.QTextCodec.codecForName('unicode'))
 
         for i in range(self.n_components):
             music = self.main.sep._sep.music[i]
@@ -414,7 +429,7 @@ class MainWindow(QtGui.QWidget):
             font = QtGui.QFont()
             font.setPointSize(20)
             title.label[i].setFont(font)
-            title.vbox.addWidget(title.label[i])
+            title.vbox.addWidget(title.label[i],alignment=QtCore.Qt.AlignCenter)
                 
             rate = self.main.rate._rate
             rate.vbox.removeWidget(rate.label[i])
@@ -431,6 +446,7 @@ class MainWindow(QtGui.QWidget):
 
 def main():
     app = QtGui.QApplication(sys.argv)
+    QtCore.QTextCodec.setCodecForCStrings( QtCore.QTextCodec.codecForLocale() )
     w = MainWindow()
     sys.exit(app.exec_())
 
