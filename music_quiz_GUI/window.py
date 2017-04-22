@@ -11,11 +11,8 @@ import pyaudio
 import wave
 
 
-##titlenameをtxtファイルから読み込むようにすべき
-##その他見た目
-
 RATE =  44100
-n_input = 10
+max_input = 10
 
 
 class menu_widget(QtGui.QWidget):
@@ -28,11 +25,13 @@ class menu_widget(QtGui.QWidget):
         self.sep_button = QtGui.QPushButton('Separate',self)
         self.label1 = QtGui.QLabel('曲数',self)
         self.combobox = QtGui.QComboBox(self)
-        for i in range(n_input-1):
+        for i in range(max_input-1):
             self.combobox.addItem(str(i+2))
         self.label2 = QtGui.QLabel('アルバム',self)
         self.albumcombobox = QtGui.QComboBox(self)
-        self.albumcombobox.addItem("album1")
+        self.albumcombobox.addItem("標準")
+        self.albumcombobox.addItem("昭和歌謡曲")
+        self.albumcombobox.addItem("アニソン")
         
         self.subhbox1 = QtGui.QHBoxLayout()
         self.subhbox1.addWidget(self.label1,alignment=QtCore.Qt.AlignRight)
@@ -54,8 +53,8 @@ class menu_widget(QtGui.QWidget):
         return value
 
     def get_album_name(self):
-        value = self.albumcombobox.currentText()
-        return value
+        value = self.albumcombobox.currentIndex()+1
+        return "album"+str(value)
 
 
 class music_widget(QtGui.QWidget):
@@ -94,7 +93,6 @@ class music_widget(QtGui.QWidget):
 
         data = wf.readframes(CHUNK)
         
-        self.esc = False
         while data != '':
             stream.write(data)
             data = wf.readframes(CHUNK)
@@ -185,7 +183,7 @@ class sep_widget(QtGui.QWidget):
         else:
             self.n_components = components
         
-        self.label = QtGui.QLabel("分離音源",self)
+        self.label = QtGui.QLabel("分離・復元音源",self)
         font = QtGui.QFont()
         font.setPointSize(25)
         self.label.setFont(font)
@@ -285,7 +283,7 @@ class rate_widget(QtGui.QWidget):
         else:
             self.n_components = components
         
-        self.label = QtGui.QLabel("一致率",self)
+        self.label = QtGui.QLabel("復元率",self)
         font = QtGui.QFont()
         font.setPointSize(25)
         self.label.setFont(font)
@@ -351,14 +349,18 @@ class MainWindow(QtGui.QWidget):
         self.main.close()
         self.main = main_widget(self,self.n_components)
         self.albumname = self.menu.get_album_name()
-    
-        data_length=np.min([os.path.getsize(self.albumname+"/input"+str(i+1)+".wav") for i in range(n_input)])/2-44
+        if self.albumname == "album1":
+            self.n_input = 20
+        elif self.albumname == "album3":
+            self.n_input = 10
+        self.data_length=np.min([os.path.getsize(self.albumname+"/input"+str(i+1)+".wav") for i in range(self.n_input)])/2-44
         
         #input voice data
-        index = random.sample(range(n_input),self.n_components)
+        index = random.sample(range(self.n_input),self.n_components)
         filenames = [(self.albumname+'/input' + str(i+1) + '.wav') for i in index]
-        input=[(wav.read(filenames[i])[1][0:data_length]) for i in range(self.n_components)]
+        input=[(wav.read(filenames[i])[1][0:self.data_length]) for i in range(self.n_components)]
         S = np.array(input).T
+        S = S*1.0/np.max(np.abs(S),axis=0)
         
         A=np.ones([self.n_components,self.n_components])-1.9*np.diag(np.ones(self.n_components))
         S=np.dot(S,A.T)
@@ -376,11 +378,9 @@ class MainWindow(QtGui.QWidget):
         self.vbox.addWidget(self.main,stretch=10)
 
     def separate(self):
-        data_length=np.min([os.path.getsize("mixed/mixed"+str(i+1)+".wav") for i in range(self.n_components)])/2-44
-
         #input voice data
         filenames = [('mixed/mixed' + str(i+1) + '.wav') for i in range(self.n_components)]
-        mixed=[(wav.read(filenames[i])[1][0:data_length]) for i in range(self.n_components)]
+        mixed=[(wav.read(filenames[i])[1][0:self.data_length]) for i in range(self.n_components)]
         S = np.array(mixed).T
 
         ica = FastICA(n_components=self.n_components)
@@ -397,22 +397,53 @@ class MainWindow(QtGui.QWidget):
             wav.write(filenames[i],RATE,S_[:,i])
 
         #input music title
-        titlename = ["One Light", "不安定な神様", "シュガーソングとビターステップ", "星灯", "Rising Hope", "恋する図形", "残酷な天使のテーゼ", "Shangri-La", "fantastic dreamer", "飛竜の騎士"]
+        if self.albumname == "album1":
+            titlename = ["飾りじゃないのよ涙は／中森明菜",
+                         "赤いスイートピー／松田聖子",
+                         "秋桜／山口百恵",
+                         "横須賀ストーリー／山口百恵",
+                         "少女Ａ／中森明菜",
+                         "大切なあなた／松田聖子",
+                         "亜麻色の髪の乙女／島谷ひとみ",
+                         "三日月／絢香",
+                         "プレイバックPart2／山口百恵",
+                         "いい日旅立ち／山口百恵",
+                         "Precious／伊藤由奈",
+                         "I believe／絢香",
+                         "ENDLESS STORY／伊藤由奈",
+                         "DESIRE-情熱-／中森明菜",
+                         "WINDING ROAD／絢香×コブクロ",
+                         "月光／鬼束ちひろ",
+                         "地上の星／中島みゆき",
+                         "ultra soul／B'z",
+                         "さよならの向こう側／山口百恵",
+                         "イミテーションゴールド／中森明菜"]
+        elif self.albumname == "album3":
+            titlename = ["One Light／kalafina",
+                         "不安定な神様／Suara",
+                         "シュガーソングとビターステップ／UNISON SQUARE GARDEN",
+                         "星灯／Suara",
+                         "Rising Hope／Lisa",
+                         "恋する図形／上坂すみれ",
+                         "残酷な天使のテーゼ／高橋洋子",
+                         "Shangri-La／angela",
+                         "fantastic dreamer／Machico",
+                         "飛竜の騎士／TRUE"]
         #input music data
-        filenames = [(self.albumname+'/input' + str(i+1) + '.wav') for i in range(n_input)]
-        input=[(wav.read(filenames[i])[1][0:data_length]) for i in range(n_input)]
+        filenames = [(self.albumname+'/input' + str(i+1) + '.wav') for i in range(self.n_input)]
+        input=[(wav.read(filenames[i])[1][0:self.data_length]) for i in range(self.n_input)]
         input = np.array(input)
 
         #output music data
         filenames = [('separated/separated' + str(i+1) + '.wav') for i in range(self.n_components)]
-        output=[(wav.read(filenames[i])[1][0:data_length]) for i in range(self.n_components)]
+        output=[(wav.read(filenames[i])[1][0:self.data_length]) for i in range(self.n_components)]
         output = np.array(output)
 
         X = np.concatenate((input,output),axis=0)
 
-        coef = np.abs(np.corrcoef(X)[n_input:n_input+self.n_components,0:n_input])
+        coef = np.abs(np.corrcoef(X)[self.n_input:self.n_input+self.n_components,0:self.n_input])
 
-        #print coef
+        #coef
         percent = np.max(coef,axis=1)*100.0
         index = np.argmax(coef,axis=1)
 
