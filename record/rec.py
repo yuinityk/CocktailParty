@@ -3,6 +3,8 @@
 import socket
 import pyaudio
 import wave
+import scipy.io.wavfile as wav
+import parallel_record
 
 WAVLEN = 860160 #This changes according to the RECORD_SECONDS, so you should change here in the future.
 #860160 for recording for 10 seconds
@@ -153,10 +155,22 @@ class Server(Recorder):
         self.soc_send.close()
 
     def postprocess(self):
-        '''
-        Adjust two recording data.
-        '''
-        pass # to be developed
+        here = wav.read('rec.wav')[1]
+        there = wav.read('received.wav')[1]
+        everywhere = parallel_record.adjust(here,there)
+
+        if everywhere == 0:
+            pass
+        elif everywhere > 0:
+            here = here[everywhere:]
+            there = there[:-everywhere]
+        else:
+            here = here[:everywhere]
+            there = there[-everywhere:]
+        
+        wav.write('rec_here.wav',self.rate,here)
+        wav.write('rec_there.wav',self.rate,there)
+
 
     def run(self):
         self.instruction()

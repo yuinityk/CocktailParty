@@ -49,9 +49,9 @@ def adjust(sig_1, sig_2, glim = 50):
             cut_s1 = tmp_s1
             cut_s2 = tmp_s2
 
-    return np.array([cut_s1, cut_s2])
+    return min_i 
 
 if __name__ == '__main__':
     s = np.array([1.,2.,3.,7.,8.,6.,7.,8.,9.,23.,12.,6.,4.,8.,4.,11.])
     t = np.array([3.,4.,1.,2.,3.,7.,8.,6.,7.,8.,9.,23.,12.,6.,4.,8.])
-    print(adjust(s,t))
+    print(adjust(t,s))
