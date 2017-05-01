@@ -1,0 +1,75 @@
+\newdimen\gfncls@dimen@titleheight
+\newdimen\gfncls@dimen@authorheight
+\newdimen\gfncls@dimen@textwidth
+\def\@maketitle{%
+  \setbox0=\hbox{\parbox{0.79\textwidth}{\centering\fontsize{19pt}{25pt}\selectfont \@title \par}}%
+  \gfncls@dimen@titleheight=0.75cm\relax
+  \advance\gfncls@dimen@titleheight by\ht0\relax
+  \advance\gfncls@dimen@titleheight by\dp0\relax
+  \setbox1=\hbox{\parbox{0.79\textwidth}{\centering\normalsize\begin{tabular}{l}\@author\end{tabular}\par}}%
+  \gfncls@dimen@authorheight=0.5cm\relax
+  \advance\gfncls@dimen@authorheight by\ht1\relax
+  \advance\gfncls@dimen@authorheight by\dp1\relax
+  \newpage%\null
+  \par\vskip -6em\relax
+  \begin{center}
+    \begin{tikzpicture}
+      \draw [line width=2pt, double distance=2pt]
+           (-0.4\textwidth, \gfncls@dimen@titleheight) rectangle (0.4\textwidth, -\gfncls@dimen@authorheight);
+      \draw (0, 0.5\gfncls@dimen@titleheight) node {%
+        \parbox[c]{0.79\textwidth}{\copy0}%
+      };
+      \draw (0, -0.5\gfncls@dimen@authorheight) node {%
+        \parbox[c]{0.79\textwidth}{\copy1}%
+      };
+      \draw (-0.3\textwidth, 0) -- (0.3\textwidth, 0);
+    \end{tikzpicture}
+  \end{center}
+  \ifvoid\@abstractbox\else\centerline{\box\@abstractbox}\vskip1.5em\fi
+}
+\renewcommand{\thesection}{\@arabic\c@section.}
+\renewcommand{\thesubsection}{\@arabic\c@section.\@arabic\c@subsection.}
+\renewcommand{\thesubsubsection}{\@arabic\c@section.\@arabic\c@subsection.\@arabic\c@subsubsection.}
+\renewcommand{\section}{%
+ \@startsection{section}{1}{\z@}%
+  {\Cvs \@plus.5\Cdp \@minus.2\Cdp}% 前アキ
+  {.5\Cvs \@plus.3\Cdp}% 後アキ
+  {\gfncls@sectionstyle}%
+}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{\z@}%
+  {.5\Cvs \@plus.5\Cdp \@minus.2\Cdp}% 前アキ
+  {.2\Cvs \@plus.3\Cdp}% 後アキ
+  {\gfncls@subsectionstyle}%
+}
+\renewcommand{\subsubsection}{\@startsection{subsubsection}{3}{\z@}%
+  {\Cvs \@plus.5\Cdp \@minus.2\Cdp}%
+  {\z@}%
+  {\normalfont\normalsize\headfont}%
+}
+\renewcommand{\thepage}{--\arabic{page}--}
+\def\gfncls@sectionstyle#1{%
+  {\parbox[c]{\textwidth}{%
+    \begin{tikzpicture}
+      \draw[line width=1pt] (0,0) -- (0.99\textwidth,0);
+      \draw[line width=0.5pt] (0,-3pt) -- (0.99\textwidth,-3pt);
+    \end{tikzpicture}\par
+    \vspace{-0.75ex}%
+    \parbox[c][3ex][c]{0.99\textwidth}{\enskip\textsf{\normalfont\Large\headfont #1}}\par
+    \vspace{-0.75ex}%
+    \begin{tikzpicture}
+      \draw[line width=0.5pt] (0,0) -- (0.99\textwidth,0);
+      \draw[line width=1pt] (0,-3pt) -- (0.99\textwidth,-3pt);
+    \end{tikzpicture}\par
+  }}%
+}
+\def\gfncls@subsectionstyle#1{%
+  {\parbox[c]{\textwidth}{%
+    \parbox[c]{0.99\textwidth}{\enskip\textsf{\normalfont\large\headfont #1}}\par
+    \vspace{-2ex}%
+    \begin{tikzpicture}
+      \draw[line width=1pt] (0,0) -- (0.99\textwidth,0);
+    \end{tikzpicture}%
+  }}%
+}
+\def\@seccntformat#1{\csname the#1\endcsname\enskip}
+\setlength{\parskip}{1ex}

@@ -1,0 +1,78 @@
+\documentclass{jsarticle}
+\makeatletter
+  \usepackage{lmodern}%(Latin Modern font)
+  \usepackage[T1]{fontenc}
+  \usepackage{amsmath}
+  \usepackage{amssymb}
+  \usepackage{bm}
+  \usepackage[dvipdfmx]{xcolor}
+  \usepackage[dvipdfmx]{graphicx}
+  \usepackage{apmayfes2015}
+  \usepackage{apmayfes2015deco}
+% ---- �K�v�ȃp�b�P�[�W�͓K�X�ǉ���Ă������� ----
+	\usepackage{tikz}
+% ---- �����ɓƎ��̃}�N���̒��`����܂��傤 ----
+  \def\catC{\mathbf{C}}
+  \def\functIdemC{\mathrm{Id}_{\catC}}
+% ---- ----
+%
+  \title{�e���v���[�g}
+  \author{gfn}
+\makeatother
+\begin{document}
+  \maketitle
+%
+  \section{�L�[���[�h}
+    \begin{itemize}
+      \item \LaTeX
+      \item �^�s�I�J
+      \item ���킵
+    \end{itemize}
+%
+  \section{���_����}
+    \indent
+      ���i�h�͎��Ȕ����̌��ɂ����郂�m�C�h�Ώۂ����D���������ł��H
+    \par
+    \indent
+      $\catC$ ��C$\funcdoms{\functIdemC}{\catC}{\catC}$ �� $\catC$ �̎��Ȕ����Ƃ���.
+      ���� $\funcdoms{T}{\catC}{\catC}$ ������
+      ���R�ϊ� $\funcdoms{\eta}{\functIdemC}{T}$�C$\funcdoms{\mu}{T^{2}}{T}$ ��
+      \begin{align*}
+        \mu \circ \mu T &= \mu \circ T \mu
+      \\
+        \mu \circ \eta T &= \functIdemC = \mu \circ T \mu
+      \end{align*}
+      �𖞂����Ƃ��C�g $\seqprn{T, \eta, \mu}$ �� $\catC$ ���̃��i�h�ƌĂԁD
+    \par
+%
+  \section{����E����ւ̉��p}
+    \indent
+      ���{���C���ꂪ���ʂ��D
+      \begin{align*}
+        y &= \paren{a + \paren{p + \paren{s + \paren{u + \paren{m + n} + v} + t} + q} + b}
+      \end{align*}
+      �Ƃ����ŁC���ł��͂��������X�g���[�ɂ��ďo�`���z�����D\cite[p.13-14]{chkw}
+      ��������� $m < n$ �Ȃ� $m, n \in \setNpos$ �ɑ΂���
+      \begin{align*}
+        S \defeq \setprnsep{\seqprn{\seqprn{a_{i}}_{i = 1}^{n}, \seqprn{b_{j}}_{j = 1}^{m}} \in \setZ^{n} \times \setZ^{m}}{
+          a_{1} b_{m} \midtab+ a_{2} b_{m - 1} + \cdots + a_{m} b_{1}\midbreak
+                      \midtab+ a_{m + 1} + \cdots + a_{n} = 0}
+      \end{align*}
+      �� $S$ �����߂��ƁC�������� $S$ �����܂�������ł����D
+      ���Ȃ݂ɏȗ��̓_�X�� $\setprn{1, 2, \ldots, n}$ �̂悤�ɃR���}�ɂ����񋓂̏ꍇ�͒Ⴂ\texttt{\symbol{"5C}ldots}�C
+      $a_{1} + a_{2} + \cdots + a_{n}$ �̂悤�ɓ񍀉��Z�q�̏ꍇ�͒�����\texttt{\symbol{"5C}cdots}�ł����D
+%
+  \section{���p��}
+    \indent
+      ���c�l�G�̃I�y����̉��l�͐����炵���D
+      ���p�����n�̉��p�����炵���D
+    \par
+%
+  \begin{thebibliography}{9}
+    \bibitem[������]{chkw} �������喾�_�C�w�������喾�_�ǖ{�x�C���������w�o�ŉ��C2015
+    \bibitem{texbook} Donald~E. Knuth. \textit{The \TeX{}book},
+      Volume~A of \textit{Computers and Typesetting}, Addison-Wesley,
+      Reading, Massachusetts, second edition, 1984, ISBN~0-201-13448-9.
+  \end{thebibliography}
+%
+\end{document}
