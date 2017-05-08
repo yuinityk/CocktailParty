@@ -21,17 +21,27 @@ class menu_widget(QtGui.QWidget):
         self.initUI()
         
     def initUI(self):
-        self.set_button = QtGui.QPushButton('Set',self)
-        self.sep_button = QtGui.QPushButton('Separate',self)
+        self.set_button = QtGui.QPushButton('楽曲セット',self)
+        self.sep_button = QtGui.QPushButton('分離・復元',self)
         self.label1 = QtGui.QLabel('曲数',self)
         self.combobox = QtGui.QComboBox(self)
         for i in range(max_input-1):
             self.combobox.addItem(str(i+2))
-        self.label2 = QtGui.QLabel('アルバム',self)
+        self.label2 = QtGui.QLabel('ジャンル',self)
         self.albumcombobox = QtGui.QComboBox(self)
-        self.albumcombobox.addItem("標準")
-        self.albumcombobox.addItem("昭和歌謡曲")
+        self.albumcombobox.addItem("J-POP他")
+        self.albumcombobox.addItem("童謡")
         self.albumcombobox.addItem("アニソン")
+        
+        font = QtGui.QFont()
+        font.setPointSize(15)
+        self.set_button.setFont(font)
+        self.sep_button.setFont(font)
+        self.label1.setFont(font)
+        self.combobox.setFont(font)
+        self.label2.setFont(font)
+        self.albumcombobox.setFont(font)
+
         
         self.subhbox1 = QtGui.QHBoxLayout()
         self.subhbox1.addWidget(self.label1,alignment=QtCore.Qt.AlignRight)
@@ -72,34 +82,60 @@ class music_widget(QtGui.QWidget):
         font.setPointSize(20)
         self.label.setFont(font)
         
-        self.button = QtGui.QPushButton('Play',self)
+        self.button = QtGui.QPushButton('再生',self)
         self.filename = filename
         
         self.hbox = QtGui.QHBoxLayout(self)
         self.hbox.addWidget(self.label,stretch=3)
         self.hbox.addWidget(self.button,stretch=1)
         self.setLayout(self.hbox)
+        
+    clickedme = QtCore.pyqtSignal(str)
 
-    def play(self):
+    def press_buttom(self):
+        self.clickedme.emit(self.filename)
+
+
+class Walker(QtCore.QThread):
+
+    def __init__(self, parent=None):
+        super(Walker, self).__init__(parent)
+        self.filename = ""
+        self.stopped = False
+        self.mutex = QtCore.QMutex()
+
+    def setup(self, filename):
+        self.filename = filename
+        self.stopped = False
+
+    def stop(self):
+        with QtCore.QMutexLocker(self.mutex):
+            self.stopped = True
+    
+    def run(self):
         CHUNK = 1024
         filename = self.filename
-
         wf = wave.open(filename, 'rb')
         p = pyaudio.PyAudio()
         stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
                         channels=wf.getnchannels(),
                         rate=wf.getframerate(),
                         output=True)
-
         data = wf.readframes(CHUNK)
-        
+
         while data != '':
+            if self.stopped:
+                return
             stream.write(data)
             data = wf.readframes(CHUNK)
-
+        
         stream.stop_stream()
         stream.close()
         p.terminate()
+        
+        self.stop()
+        self.finished.emit()
+
 
 class _mixed_widget(QtGui.QWidget):
     def __init__(self, parent=None, components=None):
@@ -327,7 +363,7 @@ class MainWindow(QtGui.QWidget):
     def __init__(self, parent=None, components=2):
         super(MainWindow, self).__init__(parent)
         self.initUI(components)
-
+    
     def initUI(self,components):
         self.setWindowTitle("Main Window Framework")
         self.menu = menu_widget(self)
@@ -342,15 +378,24 @@ class MainWindow(QtGui.QWidget):
         self.setFixedSize(1200,700)
         self.menu.set_button.clicked.connect(self.set)
         self.menu.sep_button.clicked.connect(self.separate)
+        self.walker = Walker(self)
         self.show()
     
+    def play(self,filename):
+        self.walker.stop()
+        self.walker.wait()
+        self.walker.setup(str(filename))
+        self.walker.start()
+    
     def set(self):
+        self.walker.stop()
+        self.walker.wait()
         self.n_components = self.menu.get_combo_value()
         self.main.close()
         self.main = main_widget(self,self.n_components)
         self.albumname = self.menu.get_album_name()
         if self.albumname == "album1":
-            self.n_input = 20
+            self.n_input = 15
         elif self.albumname == "album3":
             self.n_input = 10
         self.data_length=np.min([os.path.getsize(self.albumname+"/input"+str(i+1)+".wav") for i in range(self.n_input)])/2-44
@@ -373,11 +418,14 @@ class MainWindow(QtGui.QWidget):
         for i in range(self.n_components):
             wav.write(filenames[i],RATE,S[:,i])
             music = self.main.mixed._mixed.music[i]
-            music.button.clicked.connect(music.play)
+            music.button.clicked.connect(music.press_buttom)
+            music.clickedme.connect(self.play)
 
         self.vbox.addWidget(self.main,stretch=10)
 
     def separate(self):
+        self.walker.stop()
+        self.walker.wait()
         #input voice data
         filenames = [('mixed/mixed' + str(i+1) + '.wav') for i in range(self.n_components)]
         mixed=[(wav.read(filenames[i])[1][0:self.data_length]) for i in range(self.n_components)]
@@ -398,26 +446,22 @@ class MainWindow(QtGui.QWidget):
 
         #input music title
         if self.albumname == "album1":
-            titlename = ["飾りじゃないのよ涙は／中森明菜",
-                         "赤いスイートピー／松田聖子",
-                         "秋桜／山口百恵",
-                         "横須賀ストーリー／山口百恵",
-                         "少女Ａ／中森明菜",
-                         "大切なあなた／松田聖子",
-                         "亜麻色の髪の乙女／島谷ひとみ",
+            titlename = ["前前前世／RADWIMPS",
                          "三日月／絢香",
-                         "プレイバックPart2／山口百恵",
-                         "いい日旅立ち／山口百恵",
-                         "Precious／伊藤由奈",
                          "I believe／絢香",
-                         "ENDLESS STORY／伊藤由奈",
-                         "DESIRE-情熱-／中森明菜",
-                         "WINDING ROAD／絢香×コブクロ",
-                         "月光／鬼束ちひろ",
                          "地上の星／中島みゆき",
                          "ultra soul／B'z",
-                         "さよならの向こう側／山口百恵",
-                         "イミテーションゴールド／中森明菜"]
+                         "タマシイレボリューション／Superfly",
+                         "夏の終わり／森山直太朗",
+                         "栄光の架け橋／ゆず",
+                         "LaLaLa Love Song／久保田利伸",
+                         "さくら（独唱）／森山直太朗",
+                         "レーザービーム／Perfume",
+                         "蕾／コブクロ",
+                         "青いイナズマ／SMAP",
+                         "Butterfly／木村カエラ",
+                         "Born this way／Lady GaGa"]
+        
         elif self.albumname == "album3":
             titlename = ["One Light／kalafina",
                          "不安定な神様／Suara",
@@ -450,7 +494,8 @@ class MainWindow(QtGui.QWidget):
         for i in range(self.n_components):
             music = self.main.sep._sep.music[i]
             music.hbox.removeWidget(music.button)
-            music.button.clicked.connect(music.play)
+            music.button.clicked.connect(music.press_buttom)
+            music.clickedme.connect(self.play)
             music.hbox.addWidget(music.button,stretch=1)
 
             title = self.main.title._title
@@ -472,9 +517,6 @@ class MainWindow(QtGui.QWidget):
             rate.vbox.addWidget(rate.label[i])
 
 
-
-
-
 def main():
     app = QtGui.QApplication(sys.argv)
     QtCore.QTextCodec.setCodecForCStrings( QtCore.QTextCodec.codecForLocale() )
@@ -483,3 +525,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
