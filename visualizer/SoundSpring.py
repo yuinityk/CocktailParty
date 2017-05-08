@@ -8,7 +8,7 @@ import sys
 class MyAudio:
     def __init__(self):
         self.CHUNK = 1024
-        self.RATE = 22050#Hz
+        self.RATE = 44100#Hz
         self.audio = pyaudio.PyAudio()
         self.stream=self.audio.open(format=pyaudio.paInt16,
                                     channels=1,
@@ -38,7 +38,7 @@ class MyAudio:
         
 
     def AudioInput(self):
-        ret=self.stream.read(self.CHUNK)
+        ret=self.stream.read(self.CHUNK,exception_on_overflow=False)
         ret=np.frombuffer(ret, dtype="int16")/32768.0
         return ret
 

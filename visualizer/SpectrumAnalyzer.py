@@ -15,7 +15,7 @@ class PlotWindow:
     def __init__(self):
         #マイクインプット設定
         self.CHUNK=1024            #1度に読み取る音声のデータ幅
-        self.RATE=4000             #サンプリング周波数
+        self.RATE=44100             #サンプリング周波数
         self.update_seconds=1      #更新時間[ms]
         self.audio=pyaudio.PyAudio()
         self.stream=self.audio.open(format=pyaudio.paInt16,
@@ -50,7 +50,7 @@ class PlotWindow:
         self.plt.plot(x=self.axis, y=self.fft_data, clear=True, pen="y")  #symbol="o", symbolPen="y", symbolBrush="b")
 
     def AudioInput(self):
-        ret=self.stream.read(self.CHUNK)    #音声の読み取り(バイナリ) CHUNKが大きいとここで時間かかる
+        ret=self.stream.read(self.CHUNK,exception_on_overflow=False)    #音声の読み取り(バイナリ) CHUNKが大きいとここで時間かかる
         #バイナリ → 数値(int16)に変換
         #32768.0=2^16で割ってるのは正規化(絶対値を1以下にすること)
         ret=np.frombuffer(ret, dtype="int16")/32768.0
