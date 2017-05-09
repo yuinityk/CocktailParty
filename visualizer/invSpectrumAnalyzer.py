@@ -32,11 +32,11 @@ class PlotWindow:
         #プロット初期設定
         self.win=pg.GraphicsWindow()
         self.win.setWindowTitle("SpectrumAnalyzer")
-        self.win.resize(1280,680)
+        self.win.resize(680,680)
         self.plt=self.win.addPlot() #プロットのビジュアル関係
         self.plt.setLogMode(True,True)
-        self.plt.setYRange(0,2.5)    #y軸の制限
-        self.plt.setXRange(0,np.log10(self.RATE/2))
+        self.plt.setXRange(0,2.5)
+        self.plt.setYRange(np.log10(30),np.log10(self.RATE/2*1.1))
 
 
 
@@ -51,8 +51,8 @@ class PlotWindow:
             self.data=self.data[1024:]
         self.fft_data=self.FFT_AMP(self.data)
         self.axis=np.fft.fftfreq(len(self.data), d=1.0/self.RATE)
-        self.x=self.axis[1:len(self.axis)/2]
-        self.y=self.fft_data[1:len(self.fft_data)/2]
+        self.y=self.axis[1:len(self.axis)/2]
+        self.x=self.fft_data[1:len(self.fft_data)/2]
         self.plt.plot(x=self.x, y=self.y, clear=True, pen="y")
         #symbol="o", symbolPen="y", symbolBrush="b")
 

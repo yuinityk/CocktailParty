@@ -14,6 +14,7 @@ class MyAudio:
                                     channels=1,
                                     rate=self.RATE,
                                     input=True,
+                                    input_device_index=4,
                                     frames_per_buffer=self.CHUNK)
 
         self.data=np.zeros(self.CHUNK)
