@@ -29,7 +29,7 @@ class menu_widget(QtGui.QWidget):
             self.combobox.addItem(str(i+2))
         self.label2 = QtGui.QLabel('ジャンル',self)
         self.albumcombobox = QtGui.QComboBox(self)
-        self.albumcombobox.addItem("J-POP他")
+        self.albumcombobox.addItem("J-POP")
         self.albumcombobox.addItem("童謡")
         self.albumcombobox.addItem("アニソン")
         
@@ -365,22 +365,41 @@ class MainWindow(QtGui.QWidget):
         self.initUI(components)
     
     def initUI(self,components):
-        self.setWindowTitle("Main Window Framework")
+        self.setWindowTitle("Music Quiz")
+        self.titlelabel=QtGui.QLabel('<h1>〜曲当てクイズ〜</h1>',self)
+        font = QtGui.QFont()
+        font.setPointSize(15)
+        self.titlelabel.setFont(font)
         self.menu = menu_widget(self)
         self.n_components = components
         self.main = main_widget(self,self.n_components)
         
         self.vbox = QtGui.QVBoxLayout(self)
+        self.vbox.addWidget(self.titlelabel,stretch=1,alignment=QtCore.Qt.AlignCenter)
         self.vbox.addWidget(self.menu,stretch=1)
-        self.vbox.addWidget(self.main,stretch=12)
+        self.vbox.addWidget(self.main,stretch=15)
         self.setLayout(self.vbox)
         
-        self.setFixedSize(1200,700)
+        self.desktop = QtGui.qApp.desktop()
+        self.windowstate = False
+        
+        self.setFixedSize(self.desktop.width(),self.desktop.height())
         self.menu.set_button.clicked.connect(self.set)
         self.menu.sep_button.clicked.connect(self.separate)
         self.walker = Walker(self)
         self.show()
-    
+
+    def keyPressEvent(self, hoge):
+        if hoge.key() == QtCore.Qt.Key_Escape:
+            self.close()
+        elif hoge.key() == QtCore.Qt.Key_F2:
+            if self.windowstate:
+                self.windowstate = False
+                self.showNormal()
+            else:
+                self.windowstate = True
+                self.showFullScreen()
+
     def play(self,filename):
         self.walker.stop()
         self.walker.wait()
@@ -395,7 +414,9 @@ class MainWindow(QtGui.QWidget):
         self.main = main_widget(self,self.n_components)
         self.albumname = self.menu.get_album_name()
         if self.albumname == "album1":
-            self.n_input = 15
+            self.n_input = 13
+        elif self.albumname == "album2":
+            self.n_input = 18
         elif self.albumname == "album3":
             self.n_input = 10
         self.data_length=np.min([os.path.getsize(self.albumname+"/input"+str(i+1)+".wav") for i in range(self.n_input)])/2-44
@@ -452,15 +473,33 @@ class MainWindow(QtGui.QWidget):
                          "地上の星／中島みゆき",
                          "ultra soul／B'z",
                          "タマシイレボリューション／Superfly",
-                         "夏の終わり／森山直太朗",
+                         "Butterfly／木村カエラ",
                          "栄光の架け橋／ゆず",
                          "LaLaLa Love Song／久保田利伸",
                          "さくら（独唱）／森山直太朗",
                          "レーザービーム／Perfume",
                          "蕾／コブクロ",
-                         "青いイナズマ／SMAP",
-                         "Butterfly／木村カエラ",
-                         "Born this way／Lady GaGa"]
+                         "青いイナズマ／SMAP"]
+        
+        elif self.albumname == "album2":
+            titlename = ["アイアイ",
+                         "いぬのおまわりさん",
+                         "うみ",
+                         "かえるのうた",
+                         "キラキラぼし",
+                         "げんこつやまのたぬきさん",
+                         "しゃぼん玉",
+                         "ぞうさん",
+                         "チューリップ",
+                         "ちょうちょう",
+                         "とんぼのめがね",
+                         "めだかの学校",
+                         "メリーさんのひつじ",
+                         "もりのくまさん",
+                         "やぎさんゆうびん",
+                         "夕やけ小やけ",
+                         "大きな栗の木の下で",
+                         "赤とんぼ"]
         
         elif self.albumname == "album3":
             titlename = ["One Light／kalafina",
