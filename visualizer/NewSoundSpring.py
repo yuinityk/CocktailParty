@@ -42,15 +42,21 @@ class MyAudioPlot:
         self.axis=np.fft.fftfreq(len(self.data), d=1.0/self.RATE)
         self.y=self.axis[1:len(self.axis)/2]
         self.x=self.fft_data[1:len(self.fft_data)/2]
+        
+
+    def spectrum_plot(self):
         self.plt.plot(x=self.x, y=self.y, clear=True, pen="y")
 
     def get_spectrum(self):
-        self.threshold = 1
+        self.threshold = 5
         spectrum = np.empty([0,2],float)
+        count = 0
         for freq, amp in enumerate(self.x):
             if amp >= self.threshold:
                 x = np.array([[self.y[freq],amp]])
                 spectrum = np.append(spectrum,x,axis=0)
+                count +=1
+            if count > 300: break
         self.spectrum = spectrum
         return spectrum
         
@@ -89,7 +95,7 @@ class MyGroup():
         self.containers = np.append(self.containers,new_data,axis=0)
     
     def update(self):
-        gravity =3.    #acceleration of gravity
+        gravity =2.    #acceleration of gravity
         beta = 3.e-3 #viscous resistance coefficient
         alpha = 2.e-5   #inertial resistance coefficient
     
@@ -192,14 +198,15 @@ def main():
     group=MyGroup(SCR_RECT)
     clock = pygame.time.Clock()
     while True:
-        clock.tick(60)  # 60fps
+        clock.tick(100)  # 60fps
         
         screen.fill((0,0,0))
         
         myaudioplot.update()
         myaudioplot.update()
-        spectrum = myaudioplot.get_spectrum()
+        myaudioplot.spectrum_plot()
         
+        spectrum = myaudioplot.get_spectrum()
         group.append(spectrum)
         group.draw(screen)
         group.update()
