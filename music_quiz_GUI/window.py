@@ -383,7 +383,7 @@ class MainWindow(QtGui.QWidget):
         self.desktop = QtGui.qApp.desktop()
         self.windowstate = False
         
-        self.setFixedSize(self.desktop.width(),self.desktop.height())
+        self.resize(self.desktop.width()*4/5,self.desktop.height()*4/5)
         self.menu.set_button.clicked.connect(self.set)
         self.menu.sep_button.clicked.connect(self.separate)
         self.walker = Walker(self)
