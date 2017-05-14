@@ -9,6 +9,7 @@ import random
 import time
 import pyaudio
 import wave
+import shutil
 
 
 RATE =  44100
@@ -23,6 +24,7 @@ class menu_widget(QtGui.QWidget):
     def initUI(self):
         self.set_button = QtGui.QPushButton('楽曲セット',self)
         self.sep_button = QtGui.QPushButton('分離・復元',self)
+        self.sep_button.setEnabled(False)
         self.label1 = QtGui.QLabel('曲数',self)
         self.combobox = QtGui.QComboBox(self)
         for i in range(max_input-1):
@@ -31,6 +33,7 @@ class menu_widget(QtGui.QWidget):
         self.albumcombobox = QtGui.QComboBox(self)
         self.albumcombobox.addItem("J-POP")
         self.albumcombobox.addItem("童謡")
+        self.albumcombobox.addItem("クラシック")
         self.albumcombobox.addItem("アニソン")
         
         font = QtGui.QFont()
@@ -136,7 +139,6 @@ class Walker(QtCore.QThread):
         self.stop()
         self.finished.emit()
 
-
 class _mixed_widget(QtGui.QWidget):
     def __init__(self, parent=None, components=None):
         super(_mixed_widget, self).__init__(parent)
@@ -155,6 +157,7 @@ class _mixed_widget(QtGui.QWidget):
         self.music = [music_widget(parent=self,label_name="Mix"+str(i+1),filename="mixed/mixed"+str(i+1)+".wav") for i in range(self.n_components)]
         for i in range(self.n_components):
             self.vbox.addWidget(self.music[i])
+            self.music[i].button.setEnabled(False)
         self.setLayout(self.vbox)
 
 class mixed_widget(QtGui.QWidget):
@@ -203,6 +206,7 @@ class _sep_widget(QtGui.QWidget):
         self.music = [music_widget(parent=self,label_name="Separated"+str(i+1),filename="separated/separated"+str(i+1)+".wav") for i in range(components)]
         for i in range(components):
             self.vbox.addWidget(self.music[i])
+            self.music[i].button.setEnabled(False)
         self.setLayout(self.vbox)
 
 class sep_widget(QtGui.QWidget):
@@ -360,6 +364,9 @@ class main_widget(QtGui.QWidget):
         self.setLayout(self.hbox)
 
 class MainWindow(QtGui.QWidget):
+    
+    clickedsep = QtCore.pyqtSignal()
+    
     def __init__(self, parent=None, components=2):
         super(MainWindow, self).__init__(parent)
         self.initUI(components)
@@ -383,7 +390,7 @@ class MainWindow(QtGui.QWidget):
         self.desktop = QtGui.qApp.desktop()
         self.windowstate = False
         
-        self.resize(self.desktop.width()*4/5,self.desktop.height()*4/5)
+        self.setFixedSize(self.desktop.width(),self.desktop.height())
         self.menu.set_button.clicked.connect(self.set)
         self.menu.sep_button.clicked.connect(self.separate)
         self.walker = Walker(self)
@@ -391,6 +398,8 @@ class MainWindow(QtGui.QWidget):
 
     def keyPressEvent(self, hoge):
         if hoge.key() == QtCore.Qt.Key_Escape:
+            self.walker.stop()
+            self.walker.wait()
             self.close()
         elif hoge.key() == QtCore.Qt.Key_F2:
             if self.windowstate:
@@ -399,6 +408,74 @@ class MainWindow(QtGui.QWidget):
             else:
                 self.windowstate = True
                 self.showFullScreen()
+        elif hoge.key() == QtCore.Qt.Key_F3:
+            self.walker.stop()
+            self.walker.wait()
+            self.n_components = 3
+            self.albumname = "failure/album"
+            self.n_input = 3
+            self.main.close()
+            self.main = main_widget(self,self.n_components)
+
+            self.data_length=np.min([os.path.getsize("failure/mixed/mixed"+str(i+1)+".wav") for i in range(self.n_components)])/2-44
+
+            filenames = [('failure/mixed/mixed' + str(i+1) + '.wav') for i in range(self.n_components)]
+            for i in range(self.n_components):
+                shutil.copyfile(filenames[i],"mixed/mixed"+str(i+1)+".wav")
+                music = self.main.mixed._mixed.music[i]
+                music.filename = filenames[i]
+                music.button.setEnabled(True)
+                music.button.clicked.connect(music.press_buttom)
+                music.clickedme.connect(self.play)
+            self.vbox.addWidget(self.main,stretch=10)
+                
+            filenames = [('failure/separated/separated' + str(i+1) + '.wav') for i in range(self.n_components)]
+            for i in range(self.n_components):
+                shutil.copyfile(filenames[i],"separated/separated"+str(i+1)+".wav")
+            """
+            filenames = [('failure/album/input' + str(i+1) + '.wav') for i in range(self.n_components)]
+            input=[(wav.read(filenames[i])[1][0:self.data_length]) for i in range(self.n_components)]
+            input = np.array(input)
+            
+            filenames = [('failure/separated/separated' + str(i+1) + '.wav') for i in range(self.n_components)]
+            output=[(wav.read(filenames[i])[1][0:self.data_length]) for i in range(self.n_components)]
+            output = np.array(output)
+                                        
+            X = np.concatenate((input,output),axis=0)
+            coef = np.abs(np.corrcoef(X)[self.n_input:self.n_input+self.n_components,0:self.n_input])
+            percent = np.max(coef,axis=1)*100.0
+            index = np.argmax(coef,axis=1)
+
+            titlename = ["レーザービーム／Perfume","夏の終わり／森山直太朗","Born this way／Lady GaGa"]
+
+            for i in range(self.n_components):
+                music = self.main.sep._sep.music[i]
+                music.hbox.removeWidget(music.button)
+                music.button.setEnabled(True)
+                music.button.clicked.connect(music.press_buttom)
+                music.clickedme.connect(self.play)
+                music.hbox.addWidget(music.button,stretch=1)
+                
+                title = self.main.title._title
+                title.vbox.removeWidget(title.label[i])
+                title.label[i].close()
+                title.label[i] = QtGui.QLabel(titlename[index[i]])
+                font = QtGui.QFont()
+                font.setPointSize(20)
+                title.label[i].setFont(font)
+                title.vbox.addWidget(title.label[i],alignment=QtCore.Qt.AlignCenter)
+                
+                rate = self.main.rate._rate
+                rate.vbox.removeWidget(rate.label[i])
+                rate.label[i].close()
+                rate.label[i] = QtGui.QLabel(str(percent[i])[0:5]+" %")
+                font = QtGui.QFont()
+                font.setPointSize(20)
+                rate.label[i].setFont(font)
+                rate.vbox.addWidget(rate.label[i])
+            """
+            self.menu.sep_button.setEnabled(True)
+                
 
     def play(self,filename):
         self.walker.stop()
@@ -418,6 +495,8 @@ class MainWindow(QtGui.QWidget):
         elif self.albumname == "album2":
             self.n_input = 18
         elif self.albumname == "album3":
+            self.n_input = 20
+        elif self.albumname == "album4":
             self.n_input = 10
         self.data_length=np.min([os.path.getsize(self.albumname+"/input"+str(i+1)+".wav") for i in range(self.n_input)])/2-44
         
@@ -439,14 +518,17 @@ class MainWindow(QtGui.QWidget):
         for i in range(self.n_components):
             wav.write(filenames[i],RATE,S[:,i])
             music = self.main.mixed._mixed.music[i]
+            music.button.setEnabled(True)
             music.button.clicked.connect(music.press_buttom)
             music.clickedme.connect(self.play)
 
         self.vbox.addWidget(self.main,stretch=10)
+        self.menu.sep_button.setEnabled(True)
 
     def separate(self):
         self.walker.stop()
         self.walker.wait()
+        
         #input voice data
         filenames = [('mixed/mixed' + str(i+1) + '.wav') for i in range(self.n_components)]
         mixed=[(wav.read(filenames[i])[1][0:self.data_length]) for i in range(self.n_components)]
@@ -464,7 +546,8 @@ class MainWindow(QtGui.QWidget):
         filenames = [('separated/separated' + str(i+1) + '.wav') for i in range(self.n_components)]
         for i in range(self.n_components):
             wav.write(filenames[i],RATE,S_[:,i])
-
+        
+        
         #input music title
         if self.albumname == "album1":
             titlename = ["前前前世／RADWIMPS",
@@ -479,7 +562,9 @@ class MainWindow(QtGui.QWidget):
                          "さくら（独唱）／森山直太朗",
                          "レーザービーム／Perfume",
                          "蕾／コブクロ",
-                         "青いイナズマ／SMAP"]
+                         "青いイナズマ／SMAP",
+                         "夏の終わり／森山直太朗",
+                         "Born this way／Lady GaGa"]
         
         elif self.albumname == "album2":
             titlename = ["アイアイ",
@@ -500,8 +585,30 @@ class MainWindow(QtGui.QWidget):
                          "夕やけ小やけ",
                          "大きな栗の木の下で",
                          "赤とんぼ"]
-        
+
         elif self.albumname == "album3":
+            titlename = ["ヴィヴァルディ／春（四季より）",
+                         "エルガー／威風堂々",
+                         "グリーグ／朝",
+                         "サン・サーンス／白鳥",
+                         "ストラウス／春の声",
+                         "スメタナ／モルダウ",
+                         "チャイコフスキー／くるみ割り人形",
+                         "ハイドン／セレナーデ",
+                         "バッハ／主よ，人の望みの喜びよ",
+                         "バッハ／ヴァイオリン・コンチェルト",
+                         "バッハ／ブランデンブルグ協奏曲",
+                         "ビゼー／メヌエット",
+                         "ブラームス／ハンガリー舞曲",
+                         "ベートンヴェン／春",
+                         "ベートーヴェン／田園",
+                         "ボッケリーニ／メヌエット",
+                         "モーツァルト／アイネ・クライネ・ナハトムジーク",
+                         "モーツァルト／ディヴェルティメント",
+                         "ラヴェル／ボレロ",
+                         "ワーグナー／ニュルンベルクのマイスタージンガー"]
+        
+        elif self.albumname == "album4":
             titlename = ["One Light／kalafina",
                          "不安定な神様／Suara",
                          "シュガーソングとビターステップ／UNISON SQUARE GARDEN",
@@ -512,6 +619,11 @@ class MainWindow(QtGui.QWidget):
                          "Shangri-La／angela",
                          "fantastic dreamer／Machico",
                          "飛竜の騎士／TRUE"]
+        
+        elif self.albumname == "failure/album":
+            titlename = ["レーザービーム／Perfume",
+                         "夏の終わり／森山直太朗",
+                         "Born this way／Lady GaGa"]
         #input music data
         filenames = [(self.albumname+'/input' + str(i+1) + '.wav') for i in range(self.n_input)]
         input=[(wav.read(filenames[i])[1][0:self.data_length]) for i in range(self.n_input)]
@@ -533,27 +645,13 @@ class MainWindow(QtGui.QWidget):
         for i in range(self.n_components):
             music = self.main.sep._sep.music[i]
             music.hbox.removeWidget(music.button)
+            music.button.setEnabled(True)
             music.button.clicked.connect(music.press_buttom)
             music.clickedme.connect(self.play)
             music.hbox.addWidget(music.button,stretch=1)
 
-            title = self.main.title._title
-            title.vbox.removeWidget(title.label[i])
-            title.label[i].close()
-            title.label[i] = QtGui.QLabel(titlename[index[i]])
-            font = QtGui.QFont()
-            font.setPointSize(20)
-            title.label[i].setFont(font)
-            title.vbox.addWidget(title.label[i],alignment=QtCore.Qt.AlignCenter)
-                
-            rate = self.main.rate._rate
-            rate.vbox.removeWidget(rate.label[i])
-            rate.label[i].close()
-            rate.label[i] = QtGui.QLabel(str(percent[i])[0:5]+" %")
-            font = QtGui.QFont()
-            font.setPointSize(20)
-            rate.label[i].setFont(font)
-            rate.vbox.addWidget(rate.label[i])
+            self.main.title._title.label[i].setText(titlename[index[i]])
+            self.main.rate._rate.label[i].setText(str(percent[i])[0:5]+" %")
 
 
 def main():
