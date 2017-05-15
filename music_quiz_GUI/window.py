@@ -390,7 +390,7 @@ class MainWindow(QtGui.QWidget):
         self.desktop = QtGui.qApp.desktop()
         self.windowstate = False
         
-        self.setFixedSize(self.desktop.width(),self.desktop.height())
+        self.resize(self.desktop.width(),self.desktop.height())
         self.menu.set_button.clicked.connect(self.set)
         self.menu.sep_button.clicked.connect(self.separate)
         self.walker = Walker(self)
@@ -497,7 +497,7 @@ class MainWindow(QtGui.QWidget):
         elif self.albumname == "album3":
             self.n_input = 20
         elif self.albumname == "album4":
-            self.n_input = 10
+            self.n_input = 15
         self.data_length=np.min([os.path.getsize(self.albumname+"/input"+str(i+1)+".wav") for i in range(self.n_input)])/2-44
         
         #input voice data
@@ -507,7 +507,7 @@ class MainWindow(QtGui.QWidget):
         S = np.array(input).T
         S = S*1.0/np.max(np.abs(S),axis=0)
         
-        A=np.ones([self.n_components,self.n_components])-1.9*np.diag(np.ones(self.n_components))
+        A=np.ones([self.n_components,self.n_components])-2.5*np.diag(np.ones(self.n_components))
         S=np.dot(S,A.T)
         
         #volume up = normalization
@@ -612,13 +612,18 @@ class MainWindow(QtGui.QWidget):
             titlename = ["One Light／kalafina",
                          "不安定な神様／Suara",
                          "シュガーソングとビターステップ／UNISON SQUARE GARDEN",
-                         "星灯／Suara",
+                         "crossing field／Lisa",
                          "Rising Hope／Lisa",
                          "恋する図形／上坂すみれ",
                          "残酷な天使のテーゼ／高橋洋子",
                          "Shangri-La／angela",
                          "fantastic dreamer／Machico",
-                         "飛竜の騎士／TRUE"]
+                         "飛竜の騎士／TRUE",
+                         "Daydream Cafe／Petit Rabbit's",
+                         "ときめきポポロン／チマメ隊",
+                         "となりのトトロ／井上あずみ",
+                         "ピカチュウのうた／ピカチュウ",
+                         "カルマ／BUMP OF CHICKEN"]
         
         elif self.albumname == "failure/album":
             titlename = ["レーザービーム／Perfume",
