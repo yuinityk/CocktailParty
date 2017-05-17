@@ -11,6 +11,7 @@ Independent Component Analysis, by  Hyvarinen et al.
 import warnings
 import numpy as np
 from scipy import linalg
+import sys
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.externals import six
@@ -27,10 +28,10 @@ def _sym_decorrelation(W):
     i.e. W <- (W * W.H) ^{-1/2} * W
     """
     s, u = linalg.eigh(np.dot(W, np.conj(W.T)))
+    s = np.where(s<1.e-10,1.e-10,s)
     # u (resp. s) contains the eigenvectors (resp. square roots of
     # the eigenvalues) of W * W.H
     return np.dot(np.dot(u * (1. / np.sqrt(s)), np.conj(u.T)), W)
-
 
 def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     """Parallel FastICA.
@@ -45,7 +46,9 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     for ii in moves.xrange(max_iter):
         U = fast_dot(W,X)
         gwtx, g_wtx = g(np.abs(U)**2, fun_args)
+            
         W1 = _sym_decorrelation(fast_dot(gwtx * U, np.conj(X.T)) / p_ - g_wtx[:, np.newaxis] * W)
+        
         del gwtx, g_wtx
         # builtin max, abs are faster than numpy counter parts.
         lim = max(abs(abs(np.diag(fast_dot(W1, np.conj(W.T)))) - 1))
@@ -53,8 +56,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
         if lim < tol:
             break
     else:
-        warnings.warn('FastICA did not converge. Consider increasing '
-                      'tolerance or the maximum number of iterations.')
+        warnings.warn('FastICA did not converge. Consider increasing tolerance or the maximum number of iterations.')
 
     return W, ii + 1
 

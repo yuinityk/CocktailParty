@@ -45,3 +45,4 @@ for i in range(components):
     y = y.astype(np.int16)
     wav.write("filtered-"+filenames[i],RATE,y)
 
+print("\a\a\a")
